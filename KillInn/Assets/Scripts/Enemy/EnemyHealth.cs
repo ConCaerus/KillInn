@@ -14,8 +14,7 @@ public class EnemyHealth : MortalInstance {
         if(invincible)
             return;
         health -= dmg;
-        Debug.Log("her");
-        startInvinc(.5f);
+        startInvinc();
         em.stunForTime(2f);
         if(health < 0f)
             gameObject.SetActive(false);

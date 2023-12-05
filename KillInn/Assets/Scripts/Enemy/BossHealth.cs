@@ -2,22 +2,27 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using UnityEngine.UI;
 
 public class BossHealth : MortalInstance {
-    float curThreash;
+    [SerializeField] int ballDmg;
+    [SerializeField] Rigidbody2D rb;
 
-    private void Start() {
-        DOTween.Init();
-        curThreash = maxHealth * (2f / 3f);
+
+    private void OnTriggerEnter2D(Collider2D col) {
+        if(col.gameObject.tag == "Ball")
+            getHit(col.gameObject.transform, transform, ballDmg, 100f);
     }
 
+
     public override void getHit(Transform hitter, Transform hittie, int dmg, float throwAmt) {
+        if(invincible)
+            return;
         health -= dmg;
 
-        if(health <= curThreash) {
-            curThreash -= maxHealth / 3f;
-            hittie.DOMoveY(-10f, 1f);
-            hittie.GetComponent<Collider2D>().enabled = false;
-        }
+        var dir = (hittie.position - hitter.position).normalized * throwAmt;
+        rb.velocity = dir;
+
+        startInvinc();
     }
 }

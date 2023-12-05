@@ -16,7 +16,7 @@ public class PlayerBouncyBallAttack : PlayerAttack {
         controls = new InputMaster();
         controls.Enable();
         controls.Player.Attack.performed += ctx => attack();
-        controls.Player.CallBall.performed += ctx => curBall.GetComponent<BouncyBall>().toggleBabyMode();
+        controls.Player.CallBall.performed += ctx => curBall.GetComponent<BouncyBall>().toggleReturnMode();
 
         curBall = Instantiate(ballPreset.gameObject, transform.position, Quaternion.identity, null);
         curBall.SetActive(false);
@@ -31,6 +31,7 @@ public class PlayerBouncyBallAttack : PlayerAttack {
         curBall.SetActive(true);
         curBall.transform.position = transform.position;
         curBall.GetComponent<BouncyBall>().startBeingThrown();
+        CameraMovement.toggleBoundsForLayer(true, LayerMask.NameToLayer("Player"));
 
         var dir = (Vector2)Camera.main.ScreenToWorldPoint(Input.mousePosition) - (Vector2)transform.position;
         curBall.GetComponent<Rigidbody2D>().velocity = dir.normalized * 10f * throwSpeed;
@@ -44,7 +45,11 @@ public class PlayerBouncyBallAttack : PlayerAttack {
         if(!thrown)
             return;
         thrown = false;
+        CameraMovement.toggleBoundsForLayer(false, LayerMask.NameToLayer("Player"));
 
         curBall.SetActive(false);
+    }
+    public bool isBeingThrown() {
+        return thrown;
     }
 }

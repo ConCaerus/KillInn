@@ -11,7 +11,7 @@ public class BingusMovement : EnemyMovement {
 
     protected override void move() {
         var d = Mathf.Abs(transform.position.x - playerTrans.position.x);
-
+        Debug.Log("here");
         //  returns if doesn't see player or if likes distance from player
         GetComponent<SpriteRenderer>().color = Color.red;
         if(d > sightDist || d < minDistFromPlayer)

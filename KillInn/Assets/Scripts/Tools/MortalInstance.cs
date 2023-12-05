@@ -12,7 +12,9 @@ public abstract class MortalInstance : MonoBehaviour {
     [SerializeField] Slider healthBar;
 
     protected bool invincible = false;
-    Coroutine invicTimer = null;
+    Coroutine invincTimer = null;
+
+    float invincTime = .5f;
 
 
     private void Awake() {
@@ -28,10 +30,10 @@ public abstract class MortalInstance : MonoBehaviour {
         healthBar.value = health;
     }
 
-    public void startInvinc(float t) {
+    protected void startInvinc() {
         if(!gameObject.activeInHierarchy)
             return;
-        StartCoroutine(invincWaiter(t));
+        invincTimer = StartCoroutine(invincWaiter(invincTime));
     }
 
     IEnumerator sliderAnim() {
@@ -46,7 +48,7 @@ public abstract class MortalInstance : MonoBehaviour {
         invincible = true;
         yield return new WaitForSeconds(t);
         invincible = false;
-        invicTimer = null;
+        invincTimer = null;
     }
     
     public abstract void getHit(Transform hitter, Transform hittie, int dmg, float throwAmt);

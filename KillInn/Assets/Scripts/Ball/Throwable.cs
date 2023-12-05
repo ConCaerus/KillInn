@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UIElements;
 
 public abstract class Throwable : MonoBehaviour {
     [SerializeField] protected int enemyDmg;
@@ -23,6 +24,8 @@ public abstract class Throwable : MonoBehaviour {
 
     private void OnTriggerEnter2D(Collider2D col) {
         custTriggerEnter(col);
+        if(custSubEvents.ContainsKey(col.gameObject.tag))
+            custSubEvents[col.gameObject.tag].Invoke();
     }
     private void OnTriggerExit2D(Collider2D col) {
         custTriggerExit(col);
@@ -34,24 +37,15 @@ public abstract class Throwable : MonoBehaviour {
         mainCol = GetComponent<Collider2D>();
         rb.velocity = Vector2.zero;
         Physics2D.IgnoreLayerCollision(gameObject.layer, FindObjectOfType<PlayerMovement>().gameObject.layer);
+        Physics2D.IgnoreLayerCollision(gameObject.layer, LayerMask.NameToLayer("BallIgnore"));
 
         custSubColEvents.Reverse();   //  loop starts from the end, so reverse before doing the loop
-        for(int i = custSubColEvents.Count - 1; i >= 0; i--) {
-            var curEvent = new UnityEvent();    //  find all events with the same tag, add them to this event, add this event to the dictionary
-            var curTag = custSubColEvents[i].tag;
-
-            //  look for events with the same tag (includes the one at index i)
-            for(int j = i; j >= 0; j--) {
-                //  found a matching tag
-                if(curTag == custSubColEvents[j].tag) {
-                    i--;
-                    var t = custSubColEvents[j].ev;
-                    curEvent.AddListener(delegate { t.Invoke();  }); 
-                }
-            }
-
-            //  adds all events to the dick
-            custSubEvents.Add(curTag, curEvent);
+        foreach(var i in custSubColEvents) {
+            //  already has a key with this tag
+            if(custSubEvents.ContainsKey(i.tag))
+                custSubEvents[i.tag].AddListener(delegate { i.ev.Invoke(); });
+            else
+                custSubEvents.Add(i.tag, i.ev);
         }
         init();
     }

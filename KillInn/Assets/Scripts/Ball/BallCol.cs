@@ -40,7 +40,5 @@ public class BallCol : MonoBehaviour {
         else if(col.gameObject.tag == "Player") {
             bb.setMainColState(true);
         }
-
-        bb.getCustSubEvents(col.gameObject.tag).Invoke();
     }
 }

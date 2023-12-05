@@ -6,18 +6,22 @@ public class BouncyBall : Throwable {
     [SerializeField] float babyTime, babyMaxAmt, unclampedBabyInc, noise;
     float weight;
     float recallDist = 2f;
+    [SerializeField] float returnSpeed;
 
     Transform playerTrans;
     PlayerBouncyBallAttack pbba;
 
-    Coroutine babyModeWaiter = null, distChecker = null;
+    Coroutine returnModeWaiter = null, distChecker = null;
+
+    List<Vector2> bouncePoints = new List<Vector2>();
+    int curBouncePointsIndex = -1;
 
 
     private void OnEnable() {
         getRb().velocity = Vector2.zero;
         weight = 0f;
-        if(babyModeWaiter != null)
-            StopCoroutine(babyModeWaiter);
+        if(returnModeWaiter != null)
+            StopCoroutine(returnModeWaiter);
     }
     private void FixedUpdate() {
         setSavedThrownVel(getRb().velocity);
@@ -27,6 +31,21 @@ public class BouncyBall : Throwable {
             setSavedThrownVel(getSavedThrownVel() - dir * weight);
             applySavedThrownVel();
         }
+
+        /*  boring
+        if(curBouncePointsIndex < bouncePoints.Count && curBouncePointsIndex > -1) {
+            //  checks dist
+            if(Vector2.Distance(transform.position, bouncePoints[curBouncePointsIndex]) < .5f) {
+                bouncePoints.RemoveAt(curBouncePointsIndex);
+                curBouncePointsIndex--;
+                if(curBouncePointsIndex < 0)
+                    pbba.returnBall();
+            }
+            else {
+                transform.position = Vector2.MoveTowards(transform.position, bouncePoints[curBouncePointsIndex], returnSpeed * 10f * Time.fixedDeltaTime);
+            }
+        }
+        */
     }
 
     protected override void custTriggerEnter(Collider2D col) {
@@ -40,25 +59,49 @@ public class BouncyBall : Throwable {
         pbba = FindObjectOfType<PlayerBouncyBallAttack>();
     }
     public override float getBorderBouncyMod() {
-        return 1;
+        return 1f;
+    }
+
+    public void addBouncePoints() {
+        if(curBouncePointsIndex == -1) {
+            bouncePoints.Add(transform.position);
+        }
     }
 
     public void startBeingThrown() {
-        if(distChecker == null)
+        if(distChecker == null) {
             distChecker = StartCoroutine(distCheckWaiter());
+            curBouncePointsIndex = -1;
+            bouncePoints.Clear();
+            addBouncePoints();
+            weight = 0;
+        }
+    }
+
+    IEnumerator distCheckWaiter() {
+        //  wait for ball to leave dist
+        while(Vector2.Distance(playerTrans.position, transform.position) <= recallDist)
+            yield return new WaitForEndOfFrame();
+        //  wait for ball to enter dist
+        while(Vector2.Distance(playerTrans.position, transform.position) > recallDist)
+            yield return new WaitForEndOfFrame();
+        pbba.returnBall();
+        distChecker = null;
     }
 
     //  clamped baby mode
-    public void toggleBabyMode() {
+    public void toggleReturnMode() {
         if(!gameObject.activeInHierarchy)
             return;
         weight = 0;
+        curBouncePointsIndex = bouncePoints.Count - 1;
         getRb().velocity = Vector2.zero;
-        if(babyModeWaiter != null)
-            StopCoroutine(babyModeWaiter);
-        babyModeWaiter = StartCoroutine(babyMode());
+        getRb().gravityScale = 0f;
+        if(returnModeWaiter != null)
+            StopCoroutine(returnModeWaiter);
+        returnModeWaiter = StartCoroutine(weightInc());
     }
-    IEnumerator babyMode() {
+    IEnumerator weightInc() {
         //  checks if time = 0f
         if(babyTime == 0f)
             weight = babyMaxAmt;
@@ -69,16 +112,11 @@ public class BouncyBall : Throwable {
                 yield return new WaitForEndOfFrame();
             }
         }
+        returnModeWaiter = null;
     }
-    IEnumerator distCheckWaiter() {
-        //  wait for ball to leave dist
-        while(Vector2.Distance(playerTrans.position, transform.position) <= recallDist)
-            yield return new WaitForEndOfFrame();
-        //  wait for ball to enter dist
-        while(Vector2.Distance(playerTrans.position, transform.position) > recallDist) 
-            yield return new WaitForEndOfFrame();
-        pbba.returnBall();
-        distChecker = null;
+
+    public bool isBeingThrown() {
+        return gameObject.activeInHierarchy;
     }
 
     /*

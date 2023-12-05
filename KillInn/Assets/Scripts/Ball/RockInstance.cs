@@ -9,10 +9,14 @@ public class RockInstance : Throwable {
     protected override void init() {
         Physics2D.IgnoreLayerCollision(gameObject.layer, FindObjectOfType<PlayerMovement>().gameObject.layer);
         inter = GetComponent<Interactable>();
+        if(FindObjectOfType<PlayerRockAttack>() == null) {
+            enabled = false;
+            return;
+        }
         pra = FindObjectOfType<PlayerRockAttack>();
     }
     protected override void custTriggerEnter(Collider2D col) {
-        if(col.gameObject.tag == "Ground") {
+        if(col.gameObject.tag == "Ground" && pra != null) {
             Physics2D.IgnoreLayerCollision(gameObject.layer, LayerMask.NameToLayer("CameraBounds"), true);
             inter.canInteract = !pra.hasRock();
         }

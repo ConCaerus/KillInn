@@ -17,6 +17,7 @@ public class PlayerMovement : MonoBehaviour {
     Rigidbody2D rb;
     Collider2D col;
     CameraMovement cm;
+    PlayerBouncyBallAttack pbba;
     [SerializeField] Transform thrownCols;
     [SerializeField] Animator anim;
     [SerializeField] PhysicsMaterial2D slippery, frictionry;
@@ -41,6 +42,7 @@ public class PlayerMovement : MonoBehaviour {
 
     private void Awake() {
         cm = FindObjectOfType<CameraMovement>();
+        pbba = GetComponent<PlayerBouncyBallAttack>();
         controls = new InputMaster();
         controls.Enable();
         controls.Player.Move.performed += ctx => updateInput(ctx.ReadValue<Vector2>());
@@ -256,7 +258,7 @@ public class PlayerMovement : MonoBehaviour {
         thrownCols.gameObject.SetActive(b);
         GetComponent<Collider2D>().enabled = !b;
         rb.sharedMaterial = b ? frictionry : slippery;
-        CameraMovement.toggleBoundsForLayer(false, gameObject.layer);
+        CameraMovement.toggleBoundsForLayer(pbba != null || pbba.isBeingThrown(), gameObject.layer);
     }
 
     public void beThrown(Vector2 force) {

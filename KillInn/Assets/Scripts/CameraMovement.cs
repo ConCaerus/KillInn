@@ -15,21 +15,25 @@ public class CameraMovement : MonoBehaviour {
 
     Transform curCamPoint = null;
     PlayerMovement pm;
-    
+    PlayerBouncyBallAttack pbba;
+
     bool hardFollowPlayer = false;
 
     private void Awake() {
         DOTween.Init();
         playerTrans = FindObjectOfType<PlayerMovement>().transform;
         pm = playerTrans.GetComponent<PlayerMovement>();
+        pbba = FindObjectOfType<PlayerBouncyBallAttack>();
         toggleBoundsForLayer(false, playerTrans.gameObject.layer);
 
         //  sets up cam points and finds it's starting pos
-        foreach(var i in camPoints)
-            kdCamPoints.Add(i);
-        curCamPoint = kdCamPoints.FindClosest(playerTrans.position);
-        if(curCamPoint != null)
-            transform.position = new Vector3(curCamPoint.position.x, curCamPoint.position.y, transform.position.z);
+        if(camPoints != null && camPoints.Count > 0) {
+            foreach(var i in camPoints)
+                kdCamPoints.Add(i);
+            curCamPoint = kdCamPoints.FindClosest(playerTrans.position);
+            if(curCamPoint != null)
+                transform.position = new Vector3(curCamPoint.position.x, curCamPoint.position.y, transform.position.z);
+        }
 
         //  sets up the collider bounds 
         foreach(var i in FindObjectsOfType<CameraBounds>())
@@ -79,6 +83,8 @@ public class CameraMovement : MonoBehaviour {
     }
 
     public bool needsNewTarget(float minDist) {
+        if(pbba != null && pbba.isBeingThrown())
+            return false;
         var highs = Camera.main.ViewportToWorldPoint(Vector3.one);
         var lows = Camera.main.ViewportToWorldPoint(Vector3.zero);
 
@@ -91,7 +97,7 @@ public class CameraMovement : MonoBehaviour {
 
         return false;   //  doesn't check along y because fuck that
         //  checks along y
-        return  Mathf.Abs(highs.y - playerTrans.position.y) <= minDist ||
+        return Mathf.Abs(highs.y - playerTrans.position.y) <= minDist ||
                 Mathf.Abs(lows.y - playerTrans.position.y) <= minDist;
     }
 
